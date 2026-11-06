@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 65" width="100%" height="65" preserveAspectRatio="none">
+  <!-- Top decorative curves -->
+  <defs>
+    <linearGradient id="topOrangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f9a01b" />
+      <stop offset="100%" stop-color="#f26522" />
+    </linearGradient>
+    <linearGradient id="topGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8dc63f" />
+      <stop offset="100%" stop-color="#6ba52b" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Subtle dark accent -->
+  <path d="M 0 0 L 280 0 C 220 20 120 32 0 35 Z" fill="#2d3136" opacity="0.12" />
+  
+  <!-- Main green curve sweeping from top left -->
+  <path d="M -10 -5 L 420 -5 C 330 28 180 50 -10 52 Z" fill="url(#topGreenGrad)" />
+  
+  <!-- Orange / Yellow under-accent curve -->
+  <path d="M -10 -5 L 290 -5 C 240 22 130 38 -10 40 Z" fill="url(#topOrangeGrad)" opacity="0.9" />
+</svg>
+
