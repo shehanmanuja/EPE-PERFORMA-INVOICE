@@ -1,0 +1,485 @@
+/* ==========================================================================
+   APPLICATION UI STYLING - FULL WHITE THEME WITH DARK BLUE BUTTONS
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
+  color: #0f172a;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* App Top Navigation Bar */
+.app-navbar {
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 170px;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+}
+
+.brand-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Button System - Clean White & Dark Blue */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Pill Button (e.g. + Add Item in Editor Header) */
+.btn-pill {
+  border-radius: 20px !important;
+  padding: 5px 14px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+/* Primary Button - Dark Blue */
+.btn-primary {
+  background: #003b71;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 59, 113, 0.25);
+}
+
+.btn-primary:hover {
+  background: #00274d;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 59, 113, 0.35);
+}
+
+.btn-outline {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 600;
+}
+
+.btn-outline:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #003b71;
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #003b71;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  color: #00274d;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Main Two-Column App Layout */
+.app-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* Left: Form Editor Sidebar */
+.editor-sidebar {
+  width: 530px;
+  background: #ffffff;
+  border-right: 1.5px solid #e2e8f0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.editor-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.editor-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #003b71;
+}
+
+.editor-content {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+}
+
+/* Section Cards - Clean White */
+.card-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.card-title-bar {
+  background: #f8fafc;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+.card-title-bar h3 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #003b71;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+}
+
+/* Form Controls - Clean White */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+select,
+textarea {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #0f172a;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #003b71;
+  box-shadow: 0 0 0 3px rgba(0, 59, 113, 0.15);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 55px;
+}
+
+/* Items Editor List */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.item-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #003b71;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.item-btn-remove {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.item-btn-remove:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Right: Preview Area */
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #cbd5e1; /* Soft neutral grey backdrop */
+  overflow: hidden;
+  position: relative;
+}
+
+.preview-toolbar {
+  height: 48px;
+  background: #ffffff;
+  border-bottom: 1.5px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 50;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zoom-level-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 45px;
+  text-align: center;
+}
+
+/* Scalable Preview Wrapper */
+.preview-scroll-viewport {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 25px 20px;
+}
+
+.a4-transform-box {
+  transform-origin: top center;
+  transition: transform 0.15s ease-out;
+}
+
+/* Toggle Switch */
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.switch-input {
+  display: none;
+}
+
+.switch-slider {
+  width: 36px;
+  height: 20px;
+  background: #cbd5e1;
+  border-radius: 20px;
+  position: relative;
+  transition: 0.2s;
+}
+
+.switch-slider::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  background: #ffffff;
+  transition: 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.switch-input:checked + .switch-slider {
+  background: #003b71;
+}
+
+.switch-input:checked + .switch-slider::before {
+  transform: translateX(16px);
+}
+
+/* Live Badge indicator */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #003b71;
+  font-weight: 700;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* Calculations Summary Panel */
+.calc-summary-grid {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calc-row.highlight {
+  font-size: 15px;
+  font-weight: 800;
+  color: #003b71;
+  padding-top: 6px;
+  border-top: 1.5px solid #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .editor-sidebar {
+    width: 100%;
+    height: 50vh;
+  }
+  .preview-panel {
+    height: 50vh;
+  }
+}
