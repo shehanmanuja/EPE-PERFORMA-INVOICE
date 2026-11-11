@@ -263,6 +263,22 @@
           invoiceData.banks = JSON.parse(JSON.stringify(defaultInvoiceData.banks));
         }
 
+        // Ensure standard bank account numbers are populated if previously empty
+        if (Array.isArray(invoiceData.banks)) {
+          invoiceData.banks.forEach(b => {
+            const bName = (b.bank || '').toLowerCase();
+            if (bName.includes("commercial") || bName.includes("combank")) {
+              if (!b.accountNo || b.accountNo.trim() === "") b.accountNo = "1000681145";
+            }
+            if (bName.includes("hatton") || bName.includes("hnb")) {
+              if (!b.accountNo || b.accountNo.trim() === "") b.accountNo = "194010012587";
+            }
+            if (bName.includes("nations") || bName.includes("ntb")) {
+              if (!b.accountNo || b.accountNo.trim() === "") b.accountNo = "100060024944";
+            }
+          });
+        }
+
         // Ensure background is enabled by default
         if (invoiceData.settings.showBackground === undefined) {
           invoiceData.settings.showBackground = true;
@@ -275,6 +291,7 @@
           invoiceData.branding = invoiceData.branding || {};
           invoiceData.branding.mainLogo = "assets/logo.svg";
         }
+        saveData();
       } else {
         invoiceData.meta.date = getTodayDateString();
         invoiceData.meta.refNo = generateRefNumber(invoiceData.docType, invoiceData.meta.date, invoiceData.meta.refSeq);
@@ -995,6 +1012,15 @@
                 branchCode: bObj[k].branchCode || "",
                 swiftCode: bObj[k].swiftCode || ""
               });
+            }
+          });
+        }
+
+        if (Array.isArray(invoiceData.banks)) {
+          invoiceData.banks.forEach(b => {
+            const bName = (b.bank || '').toLowerCase();
+            if (bName.includes("commercial") || bName.includes("combank")) {
+              if (!b.accountNo || b.accountNo.trim() === "") b.accountNo = "1000681145";
             }
           });
         }
