@@ -122,7 +122,8 @@
 
 /* Document Title & Reference on Top Right */
 .invoice-meta {
-  width: 42%;
+  width: auto;
+  max-width: 48%;
   text-align: right;
   display: flex;
   flex-direction: column;
@@ -136,11 +137,15 @@
   letter-spacing: 0.6px;
   margin: 0 0 10px 0;
   text-transform: uppercase;
+  text-align: right;
 }
 
 .meta-grid {
   display: table;
+  width: auto;
   margin-left: auto;
+  margin-right: 0;
+  align-self: flex-end;
   font-size: 9.8px;
 }
 
@@ -161,14 +166,16 @@
   display: table-cell;
   padding: 1.5px 6px 1.5px 0;
   width: 8px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .meta-val {
   display: table-cell;
   text-align: left;
   padding: 1.5px 0;
-  min-width: 105px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* ---------------------------------------------------------
