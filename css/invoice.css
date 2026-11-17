@@ -291,6 +291,60 @@
   font-weight: 500;
 }
 
+/* Delivery Note Columns (NO, MODEL, QTY, SERIAL NUMBERS) */
+.col-dn-no {
+  width: 6%;
+  text-align: center;
+}
+
+.col-dn-model {
+  width: 28%;
+  text-align: left;
+  word-break: break-word;
+  line-height: 1.32;
+  font-weight: 600;
+}
+
+.col-dn-qty {
+  width: 8%;
+  text-align: center;
+  font-weight: 600;
+}
+
+.col-dn-serial {
+  width: 58%;
+  text-align: left;
+  word-break: break-word;
+  line-height: 1.32;
+}
+
+/* Delivery Order Columns (NO, MODEL, DESCRIPTION, QTY) */
+.col-do-no {
+  width: 6%;
+  text-align: center;
+}
+
+.col-do-model {
+  width: 26%;
+  text-align: left;
+  word-break: break-word;
+  line-height: 1.32;
+  font-weight: 600;
+}
+
+.col-do-desc {
+  width: 60%;
+  text-align: left;
+  word-break: break-word;
+  line-height: 1.32;
+}
+
+.col-do-qty {
+  width: 8%;
+  text-align: center;
+  font-weight: 600;
+}
+
 /* Empty filler rows */
 .items-table tr.empty-row td {
   color: transparent;
@@ -356,6 +410,46 @@
 }
 
 .totals-row.grand-total-row .total-val {
+  color: #ffffff;
+}
+
+/* Delivery Totals Section (Matching standard Invoice Totals width and styling) */
+.delivery-totals-section {
+  width: 34% !important;
+}
+
+.delivery-totals-section .totals-table {
+  width: 100%;
+}
+
+.delivery-totals-section .grand-total-row td {
+  padding: 3.5px 6px !important;
+  font-size: 10.8px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  vertical-align: middle;
+}
+
+.delivery-totals-section .total-label {
+  width: 55% !important;
+  white-space: nowrap !important;
+  font-size: 10.8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+}
+
+.delivery-totals-section .total-colon {
+  width: 8px !important;
+  text-align: center;
+  color: #ffffff;
+}
+
+.delivery-totals-section .total-val {
+  text-align: right;
+  font-size: 10.8px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
   color: #ffffff;
 }
 
@@ -474,6 +568,57 @@
 
 .term-text {
   color: #333333;
+}
+
+/* ---------------------------------------------------------
+   DELIVERY DETAILS SECTION (For DELIVERY NOTE & DELIVERY ORDER)
+   --------------------------------------------------------- */
+.delivery-details-section {
+  font-size: 9.5px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.delivery-details-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #111111;
+  margin-bottom: 4px;
+}
+
+.delivery-details-grid {
+  display: table;
+  width: 65%;
+  font-size: 9.5px;
+}
+
+.delivery-detail-row {
+  display: table-row;
+}
+
+.delivery-detail-label {
+  display: table-cell;
+  text-align: left;
+  padding: 2px 6px 2px 0;
+  font-weight: 600;
+  color: #333333;
+  width: 135px;
+  white-space: nowrap;
+}
+
+.delivery-detail-colon {
+  display: table-cell;
+  padding: 2px 6px 2px 0;
+  width: 8px;
+  text-align: center;
+}
+
+.delivery-detail-val {
+  display: table-cell;
+  text-align: left;
+  padding: 2px 0;
+  color: #222222;
+  font-weight: 500;
 }
 
 /* ---------------------------------------------------------
