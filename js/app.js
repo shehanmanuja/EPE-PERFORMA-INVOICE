@@ -15,16 +15,20 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  // Auto Reference Number Generator (e.g. EPEPI261106-01, EPEQT261106-01, EPETI261106-01)
+  // Auto Reference Number Generator (e.g. EPEPI261106-01, EPEQT261106-01, EPETI261106-01, EPEDN261117-01, EPEDO261117-01)
   function generateRefNumber(docType, dateVal, seq) {
     let prefix = "EPEPI";
     if (docType === "QUOTATION") {
       prefix = "EPEQT";
     } else if (docType === "TAX INVOICE") {
       prefix = "EPETI";
+    } else if (docType === "DELIVERY NOTE") {
+      prefix = "EPEDN";
+    } else if (docType === "DELIVERY ORDER") {
+      prefix = "EPEDO";
     }
 
-    let dateCode = "261105";
+    let dateCode = "261117";
     if (dateVal) {
       const parts = dateVal.split('-');
       if (parts.length === 3) {
@@ -40,6 +44,23 @@
 
     const s = (seq !== undefined && seq !== null && String(seq).trim() !== "") ? String(seq).trim().replace(/^-+/, '') : "01";
     return `${prefix}${dateCode}-${s}`;
+  }
+
+  // Format 24h time HH:MM to 12h AM/PM
+  function formatTime(tStr) {
+    if (!tStr) return "";
+    try {
+      const parts = tStr.split(':');
+      if (parts.length >= 2) {
+        let h = parseInt(parts[0], 10);
+        const m = parts[1];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12;
+        if (h === 0) h = 12;
+        return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+      }
+    } catch (e) { }
+    return tStr;
   }
 
   // Preset Sample Data (can be loaded anytime via the "Sample Data" button)
@@ -58,31 +79,46 @@
       phoneNo: "+94 77 345 6789",
       email: "procurement@greenhorizon.lk"
     },
+    delivery: {
+      collectorName: "A. M. Sunil Fernando",
+      nicNumber: "198421004589 / B3491029",
+      collectionDate: getTodayDateString(),
+      collectionTime: "14:30",
+      vehicleNo: "WP CAB-4821"
+    },
     items: [
       {
         no: 1,
+        model: "AlphaESS Smile-G3-T10-INV",
         desc: "AlphaESS Smile-G3-T10-INV 10kW Three Phase Hybrid Inverter with Smart Energy Management System",
+        serialNo: "ALPH-G3-26110019",
         unit: "Nos",
         rate: 585000,
         qty: 1
       },
       {
         no: 2,
+        model: "AlphaESS SMILE-G3-BAT-8.2P",
         desc: "AlphaESS SMILE-G3-BAT-8.2P High Voltage LiFePO4 Battery Module (8.2kWh, 90% DoD)",
+        serialNo: "BAT-82P-26090144, BAT-82P-26090145",
         unit: "Nos",
         rate: 740000,
         qty: 2
       },
       {
         no: 3,
+        model: "SINENG SP-125K-H1",
         desc: "SINENG SP-125K-H1 125kW Commercial String Inverter 1500V DC with Smart IV Curve Diagnosis",
+        serialNo: "SNG-SP125K-883201",
         unit: "Nos",
         rate: 1450000,
         qty: 1
       },
       {
         no: 4,
+        model: "BoS Kit (SPD & Isolators)",
         desc: "Complete DC Surge Protection, Type II SPD, DC Isolators and Balance of System (BoS) Kit",
+        serialNo: "BOS-KIT-2026-90",
         unit: "Set",
         rate: 185000,
         qty: 1
@@ -112,10 +148,19 @@
       phoneNo: "",
       email: ""
     },
+    delivery: {
+      collectorName: "",
+      nicNumber: "",
+      collectionDate: "",
+      collectionTime: "",
+      vehicleNo: ""
+    },
     items: [
       {
         no: 1,
+        model: "",
         desc: "",
+        serialNo: "",
         unit: "Nos",
         rate: 0,
         qty: 1
@@ -279,6 +324,23 @@
           });
         }
 
+        // Ensure delivery details object is initialized
+        if (!invoiceData.delivery) {
+          invoiceData.delivery = {
+            collectorName: "",
+            nicNumber: "",
+            collectionDate: "",
+            collectionTime: "",
+            vehicleNo: ""
+          };
+        }
+        if (Array.isArray(invoiceData.items)) {
+          invoiceData.items.forEach(it => {
+            if (it.model === undefined) it.model = "";
+            if (it.serialNo === undefined) it.serialNo = "";
+          });
+        }
+
         // Ensure background is enabled by default
         if (invoiceData.settings.showBackground === undefined) {
           invoiceData.settings.showBackground = true;
@@ -338,9 +400,10 @@
     });
 
     document.getElementById("btnSampleData")?.addEventListener("click", () => {
-      if (confirm("Load sample solar invoice data?")) {
+      if (confirm("Load sample data?")) {
         invoiceData.customer = JSON.parse(JSON.stringify(sampleSolarInvoiceData.customer));
         invoiceData.items = JSON.parse(JSON.stringify(sampleSolarInvoiceData.items));
+        invoiceData.delivery = JSON.parse(JSON.stringify(sampleSolarInvoiceData.delivery));
         invoiceData.meta.yourRef = sampleSolarInvoiceData.meta.yourRef;
         invoiceData.financials.paid = sampleSolarInvoiceData.financials.paid;
         saveData();
@@ -350,10 +413,11 @@
     });
 
     document.getElementById("btnClear")?.addEventListener("click", () => {
-      if (confirm("Clear all items and customer fields?")) {
+      if (confirm("Clear all items and form fields?")) {
         invoiceData.customer = { name: "", vatNo: "", address: "", phoneNo: "", email: "" };
+        invoiceData.delivery = { collectorName: "", nicNumber: "", collectionDate: "", collectionTime: "", vehicleNo: "" };
         invoiceData.items = [
-          { no: 1, desc: "", unit: "Nos", rate: 0, qty: 1 }
+          { no: 1, model: "", desc: "", serialNo: "", unit: "Nos", rate: 0, qty: 1 }
         ];
         invoiceData.financials.paid = 0;
         invoiceData.meta.yourRef = "";
@@ -422,6 +486,22 @@
 
   // Render Editor Form Fields
   function renderForm() {
+    const isDeliveryNote = (invoiceData.docType === "DELIVERY NOTE");
+    const isDeliveryOrder = (invoiceData.docType === "DELIVERY ORDER");
+    const isDelivery = isDeliveryNote || isDeliveryOrder;
+
+    // Document Title in Header
+    const titleEl = document.getElementById("editorHeaderTitle");
+    if (titleEl) {
+      if (isDeliveryNote) {
+        titleEl.textContent = "Delivery Note Editor";
+      } else if (isDeliveryOrder) {
+        titleEl.textContent = "Delivery Order Editor";
+      } else {
+        titleEl.textContent = "Invoice Editor";
+      }
+    }
+
     // Document Type & Meta Fields
     const selDoc = document.getElementById("selDocType");
     if (selDoc) selDoc.value = invoiceData.docType || "PROFORMA INVOICE";
@@ -438,6 +518,19 @@
     setInputValue("inputCustPhone", invoiceData.customer.phoneNo);
     setInputValue("inputCustEmail", invoiceData.customer.email);
 
+    // Section Visibility Toggles (Hide financial/banking/terms for delivery notes & orders)
+    const secTax = document.getElementById("sectionTaxPayment");
+    const secDeliverySummary = document.getElementById("sectionDeliverySummary");
+    const secBank = document.getElementById("sectionBankAccounts");
+    const secTerms = document.getElementById("sectionTermsConditions");
+    const secDelivery = document.getElementById("sectionDeliveryDetails");
+
+    if (secTax) secTax.style.display = isDelivery ? "none" : "block";
+    if (secDeliverySummary) secDeliverySummary.style.display = isDelivery ? "block" : "none";
+    if (secBank) secBank.style.display = isDelivery ? "none" : "block";
+    if (secTerms) secTerms.style.display = isDelivery ? "none" : "block";
+    if (secDelivery) secDelivery.style.display = isDelivery ? "block" : "none";
+
     // Financial Options
     const vatCheckbox = document.getElementById("chkEnableVat");
     if (vatCheckbox) vatCheckbox.checked = invoiceData.financials.vatEnabled;
@@ -450,6 +543,15 @@
     setInputValue("inputTermPayment", invoiceData.terms.paymentTerms);
     setInputValue("inputTermWarranty", invoiceData.terms.warranty);
     setInputValue("inputTermNote", invoiceData.terms.note);
+
+    // Delivery Details Fields
+    if (invoiceData.delivery) {
+      setInputValue("inputCollectorName", invoiceData.delivery.collectorName);
+      setInputValue("inputCollectorNic", invoiceData.delivery.nicNumber);
+      setInputValue("inputCollectionDate", invoiceData.delivery.collectionDate);
+      setInputValue("inputCollectionTime", invoiceData.delivery.collectionTime);
+      setInputValue("inputVehicleNo", invoiceData.delivery.vehicleNo);
+    }
 
     // Render Banks Editor
     renderBanksEditor();
@@ -490,42 +592,100 @@
 
     container.innerHTML = "";
 
+    const isDeliveryNote = (invoiceData.docType === "DELIVERY NOTE");
+    const isDeliveryOrder = (invoiceData.docType === "DELIVERY ORDER");
+
     invoiceData.items.forEach((item, index) => {
       const itemRowAmount = (Number(item.rate) || 0) * (Number(item.qty) || 0);
 
       const div = document.createElement("div");
       div.className = "item-card";
-      div.innerHTML = `
-        <div class="item-card-header">
-          <span class="item-badge">#${index + 1}</span>
-          <div class="item-actions">
-            <button type="button" class="btn btn-sm btn-secondary" onclick="window.EximiusApp.duplicateItem(${index})" title="Duplicate">Clone</button>
-            <button type="button" class="item-btn-remove" onclick="window.EximiusApp.removeItem(${index})" title="Delete item">Delete</button>
+
+      if (isDeliveryNote) {
+        // DELIVERY NOTE Item Layout: NO, MODEL, QTY, SERIAL NUMBERS
+        div.innerHTML = `
+          <div class="item-card-header">
+            <span class="item-badge">#${index + 1}</span>
+            <div class="item-actions">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="window.EximiusApp.duplicateItem(${index})" title="Duplicate">Clone</button>
+              <button type="button" class="item-btn-remove" onclick="window.EximiusApp.removeItem(${index})" title="Delete item">Delete</button>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Item Description</label>
-          <textarea rows="2" oninput="window.EximiusApp.updateItemProp(${index}, 'desc', this.value)" placeholder="Enter product or service description...">${escapeHtml(item.desc || '')}</textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex: 1.2;">
-            <label>Unit</label>
-            <input type="text" value="${item.unit || 'Nos'}" oninput="window.EximiusApp.updateItemProp(${index}, 'unit', this.value)" placeholder="Nos, Set, kW" />
+          <div class="form-group">
+            <label>Model :</label>
+            <input type="text" value="${escapeHtml(item.model || item.desc || '')}" oninput="window.EximiusApp.updateItemProp(${index}, 'model', this.value)" placeholder="e.g. AlphaESS Smile-G3-T10-INV" />
           </div>
-          <div class="form-group" style="flex: 2;">
-            <label>Unit Rate</label>
-            <input type="number" step="0.01" value="${item.rate > 0 ? item.rate : ''}" oninput="window.EximiusApp.updateItemProp(${index}, 'rate', this.value)" placeholder="0.00" />
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label>Qty :</label>
+              <input type="number" min="1" step="1" value="${item.qty !== undefined ? item.qty : 1}" oninput="window.EximiusApp.updateItemProp(${index}, 'qty', this.value)" />
+            </div>
+            <div class="form-group" style="flex: 2.2;">
+              <label>Serial Numbers :</label>
+              <input type="text" value="${escapeHtml(item.serialNo || '')}" oninput="window.EximiusApp.updateItemProp(${index}, 'serialNo', this.value)" placeholder="e.g. ALPH-G3-26110019, ALPH-G3-26110020" />
+            </div>
           </div>
-          <div class="form-group" style="flex: 1.2;">
-            <label>Qty</label>
-            <input type="number" min="1" step="1" value="${item.qty || 1}" oninput="window.EximiusApp.updateItemProp(${index}, 'qty', this.value)" />
+        `;
+      } else if (isDeliveryOrder) {
+        // DELIVERY ORDER Item Layout: NO, MODEL, DESCRIPTION, QTY
+        div.innerHTML = `
+          <div class="item-card-header">
+            <span class="item-badge">#${index + 1}</span>
+            <div class="item-actions">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="window.EximiusApp.duplicateItem(${index})" title="Duplicate">Clone</button>
+              <button type="button" class="item-btn-remove" onclick="window.EximiusApp.removeItem(${index})" title="Delete item">Delete</button>
+            </div>
           </div>
-          <div class="form-group" style="flex: 2;">
-            <label>Line Total</label>
-            <input type="text" readonly value="${formatMoney(itemRowAmount)}" style="background: #f1f5f9; color: #003b71; font-weight: 700; text-align: right;" />
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label>Model :</label>
+              <input type="text" value="${escapeHtml(item.model || '')}" oninput="window.EximiusApp.updateItemProp(${index}, 'model', this.value)" placeholder="e.g. AlphaESS Smile-G3-T10-INV" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Qty :</label>
+              <input type="number" min="1" step="1" value="${item.qty !== undefined ? item.qty : 1}" oninput="window.EximiusApp.updateItemProp(${index}, 'qty', this.value)" />
+            </div>
           </div>
-        </div>
-      `;
+          <div class="form-group">
+            <label>Description :</label>
+            <textarea rows="2" oninput="window.EximiusApp.updateItemProp(${index}, 'desc', this.value)" placeholder="Enter item description...">${escapeHtml(item.desc || '')}</textarea>
+          </div>
+        `;
+      } else {
+        // INVOICES Item Layout: NO, DESCRIPTION, UNIT, RATE, QTY, AMOUNT
+        div.innerHTML = `
+          <div class="item-card-header">
+            <span class="item-badge">#${index + 1}</span>
+            <div class="item-actions">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="window.EximiusApp.duplicateItem(${index})" title="Duplicate">Clone</button>
+              <button type="button" class="item-btn-remove" onclick="window.EximiusApp.removeItem(${index})" title="Delete item">Delete</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Item Description</label>
+            <textarea rows="2" oninput="window.EximiusApp.updateItemProp(${index}, 'desc', this.value)" placeholder="Enter product or service description...">${escapeHtml(item.desc || '')}</textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 1.2;">
+              <label>Unit</label>
+              <input type="text" value="${item.unit || 'Nos'}" oninput="window.EximiusApp.updateItemProp(${index}, 'unit', this.value)" placeholder="Nos, Set, kW" />
+            </div>
+            <div class="form-group" style="flex: 2;">
+              <label>Unit Rate</label>
+              <input type="number" step="0.01" value="${item.rate > 0 ? item.rate : ''}" oninput="window.EximiusApp.updateItemProp(${index}, 'rate', this.value)" placeholder="0.00" />
+            </div>
+            <div class="form-group" style="flex: 1.2;">
+              <label>Qty</label>
+              <input type="number" min="1" step="1" value="${item.qty || 1}" oninput="window.EximiusApp.updateItemProp(${index}, 'qty', this.value)" />
+            </div>
+            <div class="form-group" style="flex: 2;">
+              <label>Line Total</label>
+              <input type="text" readonly class="item-row-total" value="${formatMoney(itemRowAmount)}" style="background: #f1f5f9; color: #003b71; font-weight: 700; text-align: right;" />
+            </div>
+          </div>
+        `;
+      }
+
       container.appendChild(div);
     });
   }
@@ -604,11 +764,13 @@
     const bindInput = (id, targetObj, prop) => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.oninput = (e) => {
+      const handler = (e) => {
         targetObj[prop] = e.target.value;
         saveData();
         updateCalculationsAndPreview();
       };
+      el.oninput = handler;
+      el.onchange = handler;
     };
 
     // Document Type & Ref Auto-Generation
@@ -620,6 +782,7 @@
         invoiceData.meta.refNo = autoRef;
         setInputValue("inputRefNo", autoRef);
         saveData();
+        renderForm();
         updateCalculationsAndPreview();
       };
     }
@@ -658,6 +821,16 @@
     bindInput("inputCustAddress", invoiceData.customer, "address");
     bindInput("inputCustPhone", invoiceData.customer, "phoneNo");
     bindInput("inputCustEmail", invoiceData.customer, "email");
+
+    // Delivery Details
+    if (!invoiceData.delivery) {
+      invoiceData.delivery = { collectorName: "", nicNumber: "", collectionDate: "", collectionTime: "", vehicleNo: "" };
+    }
+    bindInput("inputCollectorName", invoiceData.delivery, "collectorName");
+    bindInput("inputCollectorNic", invoiceData.delivery, "nicNumber");
+    bindInput("inputCollectionDate", invoiceData.delivery, "collectionDate");
+    bindInput("inputCollectionTime", invoiceData.delivery, "collectionTime");
+    bindInput("inputVehicleNo", invoiceData.delivery, "vehicleNo");
 
     // Financials
     const vatChk = document.getElementById("chkEnableVat");
@@ -736,12 +909,14 @@
   // Update Calculations & Render Live Preview
   function updateCalculationsAndPreview() {
     let subtotal = 0;
+    let totalQty = 0;
 
     invoiceData.items.forEach((item, idx) => {
       item.no = idx + 1;
       const rate = Number(item.rate) || 0;
       const qty = Number(item.qty) || 0;
       subtotal += rate * qty;
+      totalQty += qty;
     });
 
     let vatAmount = 0;
@@ -758,6 +933,7 @@
     setText("summaryVat", formatMoney(vatAmount));
     setText("summaryGrandTotal", formatMoney(grandTotal));
     setText("summaryBalance", formatMoney(balance));
+    setText("editorTotalQty", totalQty);
 
     // Render Preview Sheet
     renderPreview({
@@ -765,7 +941,8 @@
       vatAmount,
       grandTotal,
       paid,
-      balance
+      balance,
+      totalQty
     });
   }
 
@@ -778,8 +955,10 @@
   function renderPreview(calcData) {
     if (!calcData) {
       let subtotal = 0;
+      let totalQty = 0;
       invoiceData.items.forEach(it => {
         subtotal += (Number(it.rate) || 0) * (Number(it.qty) || 0);
+        totalQty += (Number(it.qty) || 0);
       });
       const vat = invoiceData.financials.vatEnabled ? subtotal * ((invoiceData.financials.vatRate || 0) / 100) : 0;
       const grandTotal = subtotal + vat;
@@ -789,9 +968,15 @@
         vatAmount: vat,
         grandTotal,
         paid,
-        balance: grandTotal - paid
+        balance: grandTotal - paid,
+        totalQty
       };
     }
+
+    const docType = invoiceData.docType || "PROFORMA INVOICE";
+    const isDeliveryNote = (docType === "DELIVERY NOTE");
+    const isDeliveryOrder = (docType === "DELIVERY ORDER");
+    const isDelivery = isDeliveryNote || isDeliveryOrder;
 
     // Background Image Handling
     const sheet = document.getElementById("invoiceDocument");
@@ -831,7 +1016,7 @@
     setImageSrc("prevSinengLogo", invoiceData.branding.sinengLogo);
 
     // Document Title & Meta
-    setText("prevDocTitle", invoiceData.docType || "PROFORMA INVOICE");
+    setText("prevDocTitle", docType);
     setText("prevRefNo", invoiceData.meta.refNo || "");
     setText("prevDate", formatDate(invoiceData.meta.date));
     setText("prevYourRef", invoiceData.meta.yourRef || "");
@@ -843,106 +1028,196 @@
     setText("prevCustPhone", invoiceData.customer.phoneNo || "");
     setText("prevCustEmail", invoiceData.customer.email || "");
 
-    // Items Table Body (Only filled items will be displayed as requested)
+    // Render Table Header & Table Body Dynamically
+    const thead = document.getElementById("prevTableHead");
     const tbody = document.getElementById("prevTableBody");
-    if (tbody) {
-      tbody.innerHTML = "";
 
-      invoiceData.items.forEach((item, idx) => {
-        const lineTotal = (Number(item.rate) || 0) * (Number(item.qty) || 0);
-        const hasDesc = item.desc && item.desc.trim().length > 0;
-        const hasRate = Number(item.rate) > 0;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="col-no">${String(idx + 1).padStart(2, '0')}</td>
-          <td class="col-desc">${escapeHtml(item.desc || '')}</td>
-          <td class="col-unit">${(hasDesc || hasRate) ? escapeHtml(item.unit || '') : ''}</td>
-          <td class="col-rate">${hasRate ? formatMoney(item.rate) : ''}</td>
-          <td class="col-qty">${(hasDesc || hasRate) ? item.qty : ''}</td>
-          <td class="col-amount">${lineTotal > 0 ? formatMoney(lineTotal) : ''}</td>
+    if (thead && tbody) {
+      if (isDeliveryNote) {
+        // DELIVERY NOTE: NO, MODEL, QTY, SERIAL NUMBERS
+        thead.innerHTML = `
+          <tr>
+            <th class="col-dn-no">NO</th>
+            <th class="col-dn-model">MODEL</th>
+            <th class="col-dn-qty">QTY</th>
+            <th class="col-dn-serial">SERIAL NUMBERS</th>
+          </tr>
         `;
-        tbody.appendChild(tr);
-      });
+        tbody.innerHTML = "";
+        invoiceData.items.forEach((item, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="col-dn-no">${String(idx + 1).padStart(2, '0')}</td>
+            <td class="col-dn-model">${escapeHtml(item.model || item.desc || '')}</td>
+            <td class="col-dn-qty">${item.qty !== undefined ? item.qty : 1}</td>
+            <td class="col-dn-serial">${escapeHtml(item.serialNo || '')}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else if (isDeliveryOrder) {
+        // DELIVERY ORDER: NO, MODEL, DESCRIPTION, QTY
+        thead.innerHTML = `
+          <tr>
+            <th class="col-do-no">NO</th>
+            <th class="col-do-model">MODEL</th>
+            <th class="col-do-desc">DESCRIPTION</th>
+            <th class="col-do-qty">QTY</th>
+          </tr>
+        `;
+        tbody.innerHTML = "";
+        invoiceData.items.forEach((item, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="col-do-no">${String(idx + 1).padStart(2, '0')}</td>
+            <td class="col-do-model">${escapeHtml(item.model || '')}</td>
+            <td class="col-do-desc">${escapeHtml(item.desc || '')}</td>
+            <td class="col-do-qty">${item.qty !== undefined ? item.qty : 1}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        // INVOICES (PROFORMA INVOICE, QUOTATION, TAX INVOICE)
+        thead.innerHTML = `
+          <tr>
+            <th class="col-no">NO</th>
+            <th class="col-desc">DESCRIPTION</th>
+            <th class="col-unit">UNIT</th>
+            <th class="col-rate">RATE</th>
+            <th class="col-qty">QTY</th>
+            <th class="col-amount">AMOUNT</th>
+          </tr>
+        `;
+        tbody.innerHTML = "";
+        invoiceData.items.forEach((item, idx) => {
+          const lineTotal = (Number(item.rate) || 0) * (Number(item.qty) || 0);
+          const hasDesc = item.desc && item.desc.trim().length > 0;
+          const hasRate = Number(item.rate) > 0;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="col-no">${String(idx + 1).padStart(2, '0')}</td>
+            <td class="col-desc">${escapeHtml(item.desc || '')}</td>
+            <td class="col-unit">${(hasDesc || hasRate) ? escapeHtml(item.unit || '') : ''}</td>
+            <td class="col-rate">${hasRate ? formatMoney(item.rate) : ''}</td>
+            <td class="col-qty">${(hasDesc || hasRate) ? item.qty : ''}</td>
+            <td class="col-amount">${lineTotal > 0 ? formatMoney(lineTotal) : ''}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
     }
 
-    // Calculations Summary
-    setText("prevTotal", formatMoney(calcData.subtotal));
+    // Totals Section Handling
+    const invTotalsSec = document.getElementById("invoiceTotalsSection");
+    const delivTotalsSec = document.getElementById("deliveryTotalsSection");
 
-    const vatLabel = document.getElementById("prevVatLabel");
-    if (vatLabel) {
-      vatLabel.textContent = `VAT(${invoiceData.financials.vatRate}%)`;
+    if (isDelivery) {
+      if (invTotalsSec) invTotalsSec.style.display = "none";
+      if (delivTotalsSec) delivTotalsSec.style.display = "block";
+      setText("prevTotalQty", calcData.totalQty !== undefined ? calcData.totalQty : 0);
+    } else {
+      if (invTotalsSec) invTotalsSec.style.display = "block";
+      if (delivTotalsSec) delivTotalsSec.style.display = "none";
+
+      setText("prevTotal", formatMoney(calcData.subtotal));
+      const vatLabel = document.getElementById("prevVatLabel");
+      if (vatLabel) {
+        vatLabel.textContent = `VAT(${invoiceData.financials.vatRate}%)`;
+      }
+      setText("prevVatAmount", formatMoney(calcData.vatAmount));
+      setText("prevGrandTotal", formatMoney(calcData.grandTotal));
+      setText("prevPaid", formatMoney(calcData.paid));
+      setText("prevBalance", formatMoney(calcData.balance));
     }
-    setText("prevVatAmount", formatMoney(calcData.vatAmount));
-    setText("prevGrandTotal", formatMoney(calcData.grandTotal));
-    setText("prevPaid", formatMoney(calcData.paid));
-    setText("prevBalance", formatMoney(calcData.balance));
 
-    // Bank Details (Render dynamically based on active banks)
+    // Payment Instructions & Bank Details Section
     const bankBlock = document.getElementById("prevBankBlock");
     const paymentSection = document.getElementById("paymentSectionContainer");
-    if (bankBlock) {
-      bankBlock.innerHTML = "";
-      const activeBanks = (Array.isArray(invoiceData.banks) ? invoiceData.banks : []).filter(b => b.enabled !== false);
 
-      if (paymentSection) {
-        paymentSection.style.display = activeBanks.length > 0 ? "block" : "none";
+    if (isDelivery) {
+      if (paymentSection) paymentSection.style.display = "none";
+    } else {
+      if (bankBlock) {
+        bankBlock.innerHTML = "";
+        const activeBanks = (Array.isArray(invoiceData.banks) ? invoiceData.banks : []).filter(b => b.enabled !== false);
+
+        if (paymentSection) {
+          paymentSection.style.display = activeBanks.length > 0 ? "block" : "none";
+        }
+
+        activeBanks.forEach(b => {
+          const item = document.createElement("div");
+          item.className = "bank-item";
+          item.innerHTML = `
+            <div class="bank-line">
+              <span class="bank-lbl-main">Account Name</span>
+              <span class="bank-colon">:</span>
+              <span class="bank-val-main">${escapeHtml(b.accountName || "Eximius Power and Energy (Private) Limited")}</span>
+            </div>
+            <div class="bank-line">
+              <span class="bank-lbl-main">Account No</span>
+              <span class="bank-colon">:</span>
+              <span class="bank-val-main">${escapeHtml(b.accountNo || "")}</span>
+            </div>
+            <div class="bank-line-split">
+              <div class="bank-split-left">
+                <span class="bank-lbl-main">Bank</span>
+                <span class="bank-colon">:</span>
+                <span class="bank-val-main">${escapeHtml(b.bank || "")}</span>
+              </div>
+              <div class="bank-split-right">
+                <span class="bank-lbl-sub">Bank Code</span>
+                <span class="bank-colon">:</span>
+                <span class="bank-val-main">${escapeHtml(b.bankCode || "")}</span>
+              </div>
+            </div>
+            <div class="bank-line-split">
+              <div class="bank-split-left">
+                <span class="bank-lbl-main">Branch</span>
+                <span class="bank-colon">:</span>
+                <span class="bank-val-main">${escapeHtml(b.branch || "")}</span>
+              </div>
+              <div class="bank-split-right">
+                <span class="bank-lbl-sub">Branch Code</span>
+                <span class="bank-colon">:</span>
+                <span class="bank-val-main">${escapeHtml(b.branchCode || "")}</span>
+              </div>
+            </div>
+            <div class="bank-line">
+              <span class="bank-lbl-main">SWIFT Code</span>
+              <span class="bank-colon">:</span>
+              <span class="bank-val-main">${escapeHtml(b.swiftCode || "")}</span>
+            </div>
+          `;
+          bankBlock.appendChild(item);
+        });
       }
-
-      activeBanks.forEach(b => {
-        const item = document.createElement("div");
-        item.className = "bank-item";
-        item.innerHTML = `
-          <div class="bank-line">
-            <span class="bank-lbl-main">Account Name</span>
-            <span class="bank-colon">:</span>
-            <span class="bank-val-main">${escapeHtml(b.accountName || "Eximius Power and Energy (Private) Limited")}</span>
-          </div>
-          <div class="bank-line">
-            <span class="bank-lbl-main">Account No</span>
-            <span class="bank-colon">:</span>
-            <span class="bank-val-main">${escapeHtml(b.accountNo || "")}</span>
-          </div>
-          <div class="bank-line-split">
-            <div class="bank-split-left">
-              <span class="bank-lbl-main">Bank</span>
-              <span class="bank-colon">:</span>
-              <span class="bank-val-main">${escapeHtml(b.bank || "")}</span>
-            </div>
-            <div class="bank-split-right">
-              <span class="bank-lbl-sub">Bank Code</span>
-              <span class="bank-colon">:</span>
-              <span class="bank-val-main">${escapeHtml(b.bankCode || "")}</span>
-            </div>
-          </div>
-          <div class="bank-line-split">
-            <div class="bank-split-left">
-              <span class="bank-lbl-main">Branch</span>
-              <span class="bank-colon">:</span>
-              <span class="bank-val-main">${escapeHtml(b.branch || "")}</span>
-            </div>
-            <div class="bank-split-right">
-              <span class="bank-lbl-sub">Branch Code</span>
-              <span class="bank-colon">:</span>
-              <span class="bank-val-main">${escapeHtml(b.branchCode || "")}</span>
-            </div>
-          </div>
-          <div class="bank-line">
-            <span class="bank-lbl-main">SWIFT Code</span>
-            <span class="bank-colon">:</span>
-            <span class="bank-val-main">${escapeHtml(b.swiftCode || "")}</span>
-          </div>
-        `;
-        bankBlock.appendChild(item);
-      });
     }
 
-    // Terms
-    setText("prevTermValidity", invoiceData.terms.validity);
-    setText("prevTermDelivery", invoiceData.terms.delivery);
-    setText("prevTermPayment", invoiceData.terms.paymentTerms);
-    setText("prevTermWarranty", invoiceData.terms.warranty);
-    setText("prevTermNote", invoiceData.terms.note);
+    // Terms vs Delivery Details Section
+    const termsSection = document.getElementById("termsSectionContainer");
+    const deliverySection = document.getElementById("deliveryDetailsSectionContainer");
+
+    if (isDelivery) {
+      if (termsSection) termsSection.style.display = "none";
+      if (deliverySection) deliverySection.style.display = "block";
+
+      const del = invoiceData.delivery || {};
+      setText("prevCollectorName", del.collectorName || "");
+      setText("prevCollectorNic", del.nicNumber || "");
+      setText("prevCollectionDate", formatDate(del.collectionDate));
+      setText("prevCollectionTime", formatTime(del.collectionTime));
+      setText("prevVehicleNo", del.vehicleNo || "");
+    } else {
+      if (termsSection) termsSection.style.display = "block";
+      if (deliverySection) deliverySection.style.display = "none";
+
+      setText("prevTermValidity", invoiceData.terms.validity);
+      setText("prevTermDelivery", invoiceData.terms.delivery);
+      setText("prevTermPayment", invoiceData.terms.paymentTerms);
+      setText("prevTermWarranty", invoiceData.terms.warranty);
+      setText("prevTermNote", invoiceData.terms.note);
+    }
   }
 
   function setImageSrc(id, src) {
@@ -976,9 +1251,11 @@
 
   // Export & Import
   function exportJSON() {
+    const docName = (invoiceData.docType || 'Document').replace(/\s+/g, '_');
+    const refPart = (invoiceData.meta.refNo || 'Ref').replace(/[^a-zA-Z0-9_-]/g, '_');
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoiceData, null, 2));
     const downloadAnchor = document.createElement('a');
-    const filename = `Eximius_Proforma_${(invoiceData.meta.refNo || 'Invoice').replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+    const filename = `Eximius_${docName}_${refPart}.json`;
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", filename);
     document.body.appendChild(downloadAnchor);
@@ -1042,7 +1319,9 @@
     addItem: function () {
       invoiceData.items.push({
         no: invoiceData.items.length + 1,
+        model: "",
         desc: "",
+        serialNo: "",
         unit: "Nos",
         rate: 0,
         qty: 1
@@ -1055,7 +1334,7 @@
     removeItem: function (idx) {
       if (invoiceData.items.length <= 1) {
         // Clear instead of removing last item
-        invoiceData.items[0] = { no: 1, desc: "", unit: "Nos", rate: 0, qty: 1 };
+        invoiceData.items[0] = { no: 1, model: "", desc: "", serialNo: "", unit: "Nos", rate: 0, qty: 1 };
       } else {
         invoiceData.items.splice(idx, 1);
       }
@@ -1085,10 +1364,10 @@
         // Update only calculations and preview for high performance typing
         updateCalculationsAndPreview();
 
-        // Update row total input without full rerender
+        // Update row total input if present in invoice mode
         const itemCards = document.querySelectorAll(".item-card");
         if (itemCards[idx]) {
-          const rowTotalInput = itemCards[idx].querySelectorAll("input")[3];
+          const rowTotalInput = itemCards[idx].querySelector(".item-row-total");
           if (rowTotalInput) {
             const lineTotal = (Number(invoiceData.items[idx].rate) || 0) * (Number(invoiceData.items[idx].qty) || 0);
             rowTotalInput.value = formatMoney(lineTotal);
@@ -1160,4 +1439,4 @@
     init();
   }
 
-})(); 
+})();
