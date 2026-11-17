@@ -19,7 +19,7 @@
       <img src="assets/logo.svg"
         onerror="if(this.src.indexOf('logo.png')===-1){this.src='assets/logo.png';}else if(this.src.indexOf('logo.jpg')===-1){this.src='assets/logo.jpg';}"
         alt="EXIMIUS" class="navbar-logo-img">
-      <span class="brand-heading">PROFORMA | QUOTATION | TAX INVOICE Generator</span>
+      <span class="brand-heading">EXIMIUS | Invoice &amp; Delivery Management</span>
     </div>
     <div class="nav-actions">
       <button type="button" class="btn btn-outline btn-sm" id="btnSampleData" title="Load sample solar items">Sample
@@ -49,7 +49,7 @@
     <!-- Left Column: Form Editor -->
     <aside class="editor-sidebar no-print">
       <div class="editor-header">
-        <h2>Invoice Editor</h2>
+        <h2 id="editorHeaderTitle">Document Editor</h2>
         <button type="button" class="btn btn-sm btn-primary btn-pill" onclick="window.EximiusApp.addItem()">+ Add
           Item</button>
       </div>
@@ -69,6 +69,8 @@
                 <option value="PROFORMA INVOICE" selected>1. PROFORMA INVOICE</option>
                 <option value="QUOTATION">2. QUOTATION</option>
                 <option value="TAX INVOICE">3. TAX INVOICE</option>
+                <option value="DELIVERY NOTE">4. DELIVERY NOTE</option>
+                <option value="DELIVERY ORDER">5. DELIVERY ORDER</option>
               </select>
             </div>
             <div class="form-row">
@@ -138,8 +140,8 @@
           </div>
         </div>
 
-        <!-- 4. Calculations & Taxes -->
-        <div class="card-section">
+        <!-- 4. Calculations & Taxes (For Invoices) -->
+        <div class="card-section" id="sectionTaxPayment">
           <div class="card-title-bar">
             <h3>Tax &amp; Payment Summary</h3>
           </div>
@@ -182,8 +184,23 @@
           </div>
         </div>
 
+        <!-- 4.1 Delivery Quantity Summary (For Delivery Note & Order) -->
+        <div class="card-section" id="sectionDeliverySummary" style="display: none;">
+          <div class="card-title-bar">
+            <h3>Quantity Summary</h3>
+          </div>
+          <div class="card-body">
+            <div class="calc-summary-grid">
+              <div class="calc-row highlight" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #003b71; border-radius: 6px;">
+                <span style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Total Quantity:</span>
+                <span id="editorTotalQty" style="font-size: 18px; font-weight: 800; color: #ffffff;">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 5. Bank Accounts Configuration -->
-        <div class="card-section">
+        <div class="card-section" id="sectionBankAccounts">
           <div class="card-title-bar">
             <h3>Bank Transfer Details</h3>
             <button type="button" class="btn btn-sm btn-primary btn-pill" onclick="window.EximiusApp.addBank()">+ Add
@@ -194,8 +211,8 @@
           </div>
         </div>
 
-        <!-- 6. Terms & Conditions -->
-        <div class="card-section">
+        <!-- 6. Terms & Conditions (For Invoices) -->
+        <div class="card-section" id="sectionTermsConditions">
           <div class="card-title-bar">
             <h3>Terms &amp; Conditions</h3>
           </div>
@@ -219,6 +236,37 @@
             <div class="form-group">
               <label>Note :</label>
               <textarea id="inputTermNote" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Delivery Details (For Delivery Note & Delivery Order) -->
+        <div class="card-section" id="sectionDeliveryDetails" style="display: none;">
+          <div class="card-title-bar">
+            <h3>Delivery Details</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Name of the Collector :</label>
+              <input type="text" id="inputCollectorName" placeholder="e.g. A. M. Sunil Fernando">
+            </div>
+            <div class="form-group">
+              <label>NIC / DL Number :</label>
+              <input type="text" id="inputCollectorNic" placeholder="e.g. 198421004589 / B3491029">
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex: 1.2;">
+                <label>Date of Collection :</label>
+                <input type="date" id="inputCollectionDate">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label>Time of Collection :</label>
+                <input type="time" id="inputCollectionTime">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Vehicle Number :</label>
+              <input type="text" id="inputVehicleNo" placeholder="e.g. WP CAB-4821">
             </div>
           </div>
         </div>
@@ -322,7 +370,7 @@
               <!-- Items Table -->
               <section class="items-table-container">
                 <table class="items-table">
-                  <thead>
+                  <thead id="prevTableHead">
                     <tr>
                       <th class="col-no">NO</th>
                       <th class="col-desc">DESCRIPTION</th>
@@ -340,7 +388,7 @@
 
               <!-- Totals Section (Right-aligned, directly underneath the items table) -->
               <section class="totals-section-container">
-                <div class="totals-section">
+                <div class="totals-section" id="invoiceTotalsSection">
                   <table class="totals-table">
                     <tr class="totals-row">
                       <td class="total-label">Total</td>
@@ -369,6 +417,16 @@
                     </tr>
                   </table>
                 </div>
+
+                <div class="totals-section delivery-totals-section" id="deliveryTotalsSection" style="display: none;">
+                  <table class="totals-table">
+                    <tr class="totals-row grand-total-row delivery-total-row">
+                      <td class="total-label delivery-total-label">Total Quantity</td>
+                      <td class="total-colon">:</td>
+                      <td class="total-val delivery-total-val" id="prevTotalQty">0</td>
+                    </tr>
+                  </table>
+                </div>
               </section>
 
               <!-- Payment Instructions & Bank Details Section (Positioned cleanly below Totals with generous space) -->
@@ -381,8 +439,8 @@
                 </div>
               </section>
 
-              <!-- Terms & Conditions Section -->
-              <section class="terms-section">
+              <!-- Terms & Conditions Section (For Invoices) -->
+              <section class="terms-section" id="termsSectionContainer">
                 <div class="terms-title">Terms &amp; Conditions</div>
                 <div class="terms-item">
                   <span class="term-tag">Validity:</span>
@@ -406,6 +464,38 @@
                   <span class="term-tag">Note:</span>
                   <span class="term-text" id="prevTermNote">All the prices are subject to change based on current tax
                     rates and dollar fluctuations</span>
+                </div>
+              </section>
+
+              <!-- Delivery Details Section (For Delivery Note & Delivery Order) -->
+              <section class="delivery-details-section" id="deliveryDetailsSectionContainer" style="display: none;">
+                <div class="delivery-details-title">Delivery Details</div>
+                <div class="delivery-details-grid">
+                  <div class="delivery-detail-row">
+                    <div class="delivery-detail-label">Name of the Collector</div>
+                    <div class="delivery-detail-colon">:</div>
+                    <div class="delivery-detail-val" id="prevCollectorName"></div>
+                  </div>
+                  <div class="delivery-detail-row">
+                    <div class="delivery-detail-label">NIC / DL Number</div>
+                    <div class="delivery-detail-colon">:</div>
+                    <div class="delivery-detail-val" id="prevCollectorNic"></div>
+                  </div>
+                  <div class="delivery-detail-row">
+                    <div class="delivery-detail-label">Date of Collection</div>
+                    <div class="delivery-detail-colon">:</div>
+                    <div class="delivery-detail-val" id="prevCollectionDate"></div>
+                  </div>
+                  <div class="delivery-detail-row">
+                    <div class="delivery-detail-label">Time of Collection</div>
+                    <div class="delivery-detail-colon">:</div>
+                    <div class="delivery-detail-val" id="prevCollectionTime"></div>
+                  </div>
+                  <div class="delivery-detail-row">
+                    <div class="delivery-detail-label">Vehicle Number</div>
+                    <div class="delivery-detail-colon">:</div>
+                    <div class="delivery-detail-val" id="prevVehicleNo"></div>
+                  </div>
                 </div>
               </section>
 
